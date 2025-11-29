@@ -6,9 +6,13 @@ import (
 	"net/http"
 )
 
-func RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/", middleware.RequireLogin(handler.HomeHandler))
-    mux.HandleFunc("/login", handler.LoginPageHandler)
-    mux.HandleFunc("/api/login", handler.LoginHandler)
-	mux.HandleFunc("/logout", middleware.RequireLogin(handler.LogoutHandler))
+// GetRouteHandler はルーティングを登録したハンドラーを返します。
+func GetRouteHandler() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", middleware.RequireLogin(handler.ShowHome))
+	mux.HandleFunc("GET /login", handler.ShowLogin)
+	mux.HandleFunc("POST /login", handler.Login)
+	mux.HandleFunc("GET /logout", middleware.RequireLogin(handler.Logout))
+	handler := middleware.CSRF(mux)
+	return handler
 }

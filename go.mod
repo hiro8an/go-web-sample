@@ -1,6 +1,6 @@
 module go-web-sample
 
-go 1.23.6
+go 1.25.4
 
 require github.com/gorilla/sessions v1.4.0
 
