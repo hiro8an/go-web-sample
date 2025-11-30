@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <title>タスク詳細</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-lg bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">{{.Task.Title}}</h1>
+        <a href="/tasks" class="inline-block mb-6 text-indigo-600 hover:underline">← 戻る</a>
+        <div class="bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-4 rounded-lg mb-6">
+            <p class="font-semibold mb-2">説明</p>
+            <p class="text-gray-700">{{.Task.Description}}</p>
+        </div>
+        <div class="mb-6">
+            <p class="mb-1"><span class="font-semibold">状態:</span> {{if .Task.Completed}}<span class="text-green-600 font-semibold">完了</span>{{else}}<span class="text-red-500 font-semibold">未完了</span>{{end}}</p>
+            <p><span class="font-semibold">作成日:</span> {{.Task.CreatedAtJST}}</p>
+        </div>
+        <div class="flex gap-4">
+            <a href="/tasks/{{.Task.ID}}/edit" class="bg-blue-500 text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-600 transition">編集</a>
+            <form action="/tasks/{{.Task.ID}}" method="POST" class="inline">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" onclick="return confirm('削除してもよろしいですか？')" class="bg-red-500 text-white font-semibold px-6 py-2 rounded-lg hover:bg-red-600 transition">削除</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

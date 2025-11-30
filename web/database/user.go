@@ -36,7 +36,7 @@ func RegisterUser(username, password string) error {
 }
 
 // ユーザ名で検索
-func FindUserByUsername(username string) (*User, error) {
+func GetUserByUsername(username string) (*User, error) {
 	var user User
 	err := db.QueryRow("SELECT id, username, password FROM users WHERE username = ?", username).
 		Scan(&user.ID, &user.Username, &user.Password)
@@ -51,7 +51,7 @@ func FindUserByUsername(username string) (*User, error) {
 
 // ユーザ認証
 func AuthenticateUser(username, password string) (bool, error) {
-	user, err := FindUserByUsername(username)
+	user, err := GetUserByUsername(username)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}

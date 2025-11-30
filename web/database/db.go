@@ -3,11 +3,21 @@ package database
 import (
 	"database/sql"
 	"log"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sql.DB
+var jst *time.Location
+
+func init() {
+	var err error
+	jst, err = time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		panic(err)
+	}
+}
 
 // データベース初期化
 func InitDB() error {
@@ -26,6 +36,22 @@ func InitDB() error {
 	);`
 
 	_, err = db.Exec(createTableSQL)
+	if err != nil {
+		return err
+	}
+
+	// タスクテーブル作成（ユーザごとのタスク管理）
+	createTasksSQL := `CREATE TABLE IF NOT EXISTS tasks (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		title TEXT NOT NULL,
+		description TEXT,
+		completed INTEGER DEFAULT 0,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+	);`
+
+	_, err = db.Exec(createTasksSQL)
 	return err
 }
 
@@ -35,7 +61,7 @@ func Seed() error {
 	// demo user
 	username := "demo"
 	password := "Password123"
-	user, err := FindUserByUsername(username)
+	user, err := GetUserByUsername(username)
 	if err != nil {
 		log.Fatal(err)
 	}
