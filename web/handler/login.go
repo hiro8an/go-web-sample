@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"go-web-sample/web/auth"
+	"go-web-sample/web/database"
 )
 
 // ログイン画面表示
@@ -30,7 +31,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 簡易的な認証(実装例: demo/demo)
-	if username != "demo" || password != "demo" {
+	ok, err := database.AuthenticateUser(username, password)
+	if err != nil {
+		http.Error(w, "認証エラー", http.StatusInternalServerError)
+		return
+	}
+	if !ok {
 		http.Error(w, "ユーザー名またはパスワードが不正です", http.StatusUnauthorized)
 		return
 	}

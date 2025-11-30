@@ -1,3 +1,8 @@
+# SQLite3 Database Files
+*.db
+
+# =============================================================================
+
 # Created by https://www.toptal.com/developers/gitignore/api/go,visualstudiocode,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,visualstudiocode,windows
 
