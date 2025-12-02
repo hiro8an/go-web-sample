@@ -1,14 +1,13 @@
 package database
 
 import (
-	"database/sql"
-	"log"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
-var db *sql.DB
+var db *gorm.DB
 var jst *time.Location
 
 func init() {
@@ -22,7 +21,7 @@ func init() {
 // データベース初期化
 func InitDB() error {
 	var err error
-	db, err = sql.Open("sqlite3", "./app.db")
+	db, err = gorm.Open(sqlite.Open("app.db"), &gorm.Config{})
 	if err != nil {
 		return err
 	}
@@ -35,7 +34,7 @@ func InitDB() error {
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);`
 
-	_, err = db.Exec(createTableSQL)
+	err = db.Exec(createTableSQL).Error
 	if err != nil {
 		return err
 	}
@@ -51,30 +50,14 @@ func InitDB() error {
 		FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 	);`
 
-	_, err = db.Exec(createTasksSQL)
+	err = db.Exec(createTasksSQL).Error
 	return err
 }
 
-func Seed() error {
-	// TODO: 初期データの挿入などをここに実装
-
-	// demo user
-	username := "demo"
-	password := "Password123"
-	user, err := GetUserByUsername(username)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if user == nil {
-		err = RegisterUser(username, password)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func CloseDB() error {
-	return db.Close()
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.Close()
 }

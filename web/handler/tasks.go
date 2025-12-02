@@ -11,8 +11,11 @@ import (
 
 // Index - タスク一覧表示
 func IndexTasks(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.AuthManager.GetUsername(r)
-	user, _ := database.GetUserByUsername(username)
+	user, err := auth.AuthManager.GetUser(r)
+	if err != nil {
+		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
+		return
+	}
 	if user == nil {
 		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
 		return
@@ -25,29 +28,35 @@ func IndexTasks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tasksTmpl.Execute(w, map[string]interface{}{
-		"Username": username,
+		"Username": user.Username,
 		"Tasks":    tasks,
 	})
 }
 
 // New - 新規作成フォーム表示
 func NewTask(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.AuthManager.GetUsername(r)
-	user, _ := database.GetUserByUsername(username)
+	user, err := auth.AuthManager.GetUser(r)
+	if err != nil {
+		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
+		return
+	}
 	if user == nil {
 		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
 		return
 	}
 	taskFormTmpl.Execute(w, map[string]interface{}{
-		"Username": username,
+		"Username": user.Username,
 		"Mode":     "create",
 	})
 }
 
 // Create - 新規作成処理
 func CreateTask(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.AuthManager.GetUsername(r)
-	user, _ := database.GetUserByUsername(username)
+	user, err := auth.AuthManager.GetUser(r)
+	if err != nil {
+		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
+		return
+	}
 	if user == nil {
 		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
 		return
@@ -64,7 +73,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := database.CreateTask(user.ID, title, description)
+	_, err = database.CreateTask(user.ID, title, description)
 	if err != nil {
 		http.Error(w, "タスク作成エラー", http.StatusInternalServerError)
 		return
@@ -74,8 +83,11 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 // Show - 詳細表示
 func ShowTask(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.AuthManager.GetUsername(r)
-	user, _ := database.GetUserByUsername(username)
+	user, err := auth.AuthManager.GetUser(r)
+	if err != nil {
+		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
+		return
+	}
 	if user == nil {
 		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
 		return
@@ -95,15 +107,18 @@ func ShowTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	taskShowTmpl.Execute(w, map[string]interface{}{
-		"Username": username,
+		"Username": user.Username,
 		"Task":     task,
 	})
 }
 
 // Edit - 編集フォーム表示
 func EditTask(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.AuthManager.GetUsername(r)
-	user, _ := database.GetUserByUsername(username)
+	user, err := auth.AuthManager.GetUser(r)
+	if err != nil {
+		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
+		return
+	}
 	if user == nil {
 		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
 		return
@@ -123,7 +138,7 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	taskFormTmpl.Execute(w, map[string]interface{}{
-		"Username": username,
+		"Username": user.Username,
 		"Mode":     "edit",
 		"Task":     task,
 	})
@@ -131,8 +146,11 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 
 // Update - 更新処理
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.AuthManager.GetUsername(r)
-	user, _ := database.GetUserByUsername(username)
+	user, err := auth.AuthManager.GetUser(r)
+	if err != nil {
+		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
+		return
+	}
 	if user == nil {
 		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
 		return
@@ -168,8 +186,11 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 // Destroy - 削除処理
 func DestroyTask(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.AuthManager.GetUsername(r)
-	user, _ := database.GetUserByUsername(username)
+	user, err := auth.AuthManager.GetUser(r)
+	if err != nil {
+		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
+		return
+	}
 	if user == nil {
 		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
 		return

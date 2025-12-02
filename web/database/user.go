@@ -1,62 +1,66 @@
 package database
 
 import (
-	"database/sql"
-
-	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type User struct {
-	ID       int
-	Username string
-	Password string
+	ID        int    `gorm:"primaryKey"`
+	Username  string `gorm:"uniqueIndex"`
+	Password  string
+	CreatedAt string `gorm:"type:datetime;default:CURRENT_TIMESTAMP"`
 }
 
-// パスワードハッシュ化
-func hashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
+// TableName は User 構造体が対応するテーブル名を指定します
+func (User) TableName() string {
+	return "users"
 }
 
-// パスワード検証
-func checkPassword(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-// ユーザ登録
-func RegisterUser(username, password string) error {
-	hash, err := hashPassword(password)
-	if err != nil {
-		return err
+// CreateUser 新しいユーザを作成する
+func CreateUser(username, passwordHash string) (int, error) {
+	user := User{
+		Username: username,
+		Password: passwordHash,
 	}
-
-	_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, hash)
-	return err
+	result := db.Create(&user)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return user.ID, nil
 }
 
-// ユーザ名で検索
-func GetUserByUsername(username string) (*User, error) {
+// GetUserByID ユーザをIDで取得
+func GetUserByID(id int) (*User, error) {
 	var user User
-	err := db.QueryRow("SELECT id, username, password FROM users WHERE username = ?", username).
-		Scan(&user.ID, &user.Username, &user.Password)
-	if err == sql.ErrNoRows {
-		return nil, nil // ユーザが見つからない場合は nil を返す
+	result := db.First(&user, id)
+	if result.Error == gorm.ErrRecordNotFound {
+		return nil, nil
 	}
-	if err != nil {
-		return nil, err
+	if result.Error != nil {
+		return nil, result.Error
 	}
 	return &user, nil
 }
 
-// ユーザ認証
-func AuthenticateUser(username, password string) (bool, error) {
-	user, err := GetUserByUsername(username)
-	if err == sql.ErrNoRows {
-		return false, nil
+// GetUserByUsername ユーザ名で検索
+func GetUserByUsername(username string) (*User, error) {
+	var user User
+	result := db.Where(&User{Username: username}).First(&user)
+	if result.Error == gorm.ErrRecordNotFound {
+		return nil, nil
 	}
-	if err != nil {
-		return false, err
+	if result.Error != nil {
+		return nil, result.Error
 	}
-	return checkPassword(password, user.Password), nil
+	return &user, nil
+}
+
+// UpdateUser ユーザを更新する
+func UpdateUser(user *User) error {
+	return db.Save(user).Error
+}
+
+// DeleteUser ユーザを削除する
+func DeleteUser(id int) error {
+	return db.Delete(&User{}, id).Error
 }

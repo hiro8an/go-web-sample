@@ -1,17 +1,23 @@
 package database
 
 import (
-	"database/sql"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Task struct {
-	ID          int
-	UserID      int
+	ID          int `gorm:"primaryKey"`
+	UserID      int `gorm:"index"`
 	Title       string
 	Description string
-	Completed   bool
-	CreatedAt   time.Time
+	Completed   bool      `gorm:"default:false"`
+	CreatedAt   time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP"`
+}
+
+// TableName は Task 構造体が対応するテーブル名を指定します
+func (Task) TableName() string {
+	return "tasks"
 }
 
 // CreatedAtJST 作成日時を日本時間でフォーマットして返す
@@ -20,36 +26,25 @@ func (t *Task) CreatedAtJST() string {
 }
 
 // CreateTask 新しいタスクを作成する
-func CreateTask(userID int, title, description string) (int64, error) {
-	res, err := db.Exec("INSERT INTO tasks (user_id, title, description) VALUES (?, ?, ?)", userID, title, description)
-	if err != nil {
-		return 0, err
+func CreateTask(userID int, title, description string) (int, error) {
+	task := Task{
+		UserID:      userID,
+		Title:       title,
+		Description: description,
 	}
-	return res.LastInsertId()
+	result := db.Create(&task)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return task.ID, nil
 }
 
 // GetTasksByUser ユーザに紐づくタスク一覧を取得
 func GetTasksByUser(userID int) ([]Task, error) {
-	rows, err := db.Query("SELECT id, user_id, title, description, completed, created_at FROM tasks WHERE user_id = ? ORDER BY created_at DESC", userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var tasks []Task
-	for rows.Next() {
-		var t Task
-		var completed int
-		var created string
-		if err := rows.Scan(&t.ID, &t.UserID, &t.Title, &t.Description, &completed, &created); err != nil {
-			return nil, err
-		}
-		t.Completed = completed != 0
-		t.CreatedAt, _ = time.Parse(time.RFC3339, created)
-		tasks = append(tasks, t)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
+	result := db.Where(&Task{UserID: userID}).Order("created_at DESC").Find(&tasks)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 	return tasks, nil
 }
@@ -57,33 +52,22 @@ func GetTasksByUser(userID int) ([]Task, error) {
 // GetTaskByID タスクをIDで取得
 func GetTaskByID(id int) (*Task, error) {
 	var t Task
-	var completed int
-	var created string
-	err := db.QueryRow("SELECT id, user_id, title, description, completed, created_at FROM tasks WHERE id = ?", id).
-		Scan(&t.ID, &t.UserID, &t.Title, &t.Description, &completed, &created)
-	if err == sql.ErrNoRows {
+	result := db.First(&t, id)
+	if result.Error == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
-	if err != nil {
-		return nil, err
+	if result.Error != nil {
+		return nil, result.Error
 	}
-	t.Completed = completed != 0
-	t.CreatedAt, _ = time.Parse(time.RFC3339, created)
 	return &t, nil
 }
 
 // UpdateTask タスクを更新する
 func UpdateTask(t *Task) error {
-	completed := 0
-	if t.Completed {
-		completed = 1
-	}
-	_, err := db.Exec("UPDATE tasks SET title = ?, description = ?, completed = ? WHERE id = ?", t.Title, t.Description, completed, t.ID)
-	return err
+	return db.Save(t).Error
 }
 
 // DeleteTask タスクを削除する
 func DeleteTask(id int) error {
-	_, err := db.Exec("DELETE FROM tasks WHERE id = ?", id)
-	return err
+	return db.Delete(&Task{}, id).Error
 }

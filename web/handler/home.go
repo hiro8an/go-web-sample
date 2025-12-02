@@ -7,8 +7,16 @@ import (
 
 // ホーム画面表示
 func ShowHome(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.AuthManager.GetUsername(r)
+	user, err := auth.AuthManager.GetUser(r)
+	if err != nil {
+		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
+		return
+	}
+	if user == nil {
+		http.Error(w, "ユーザーが見つかりません", http.StatusUnauthorized)
+		return
+	}
 	homeTmpl.Execute(w, map[string]interface{}{
-		"Username": username,
+		"Username": user.Username,
 	})
 }

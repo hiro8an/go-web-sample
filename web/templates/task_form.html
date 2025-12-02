@@ -25,7 +25,7 @@
             </div>
             {{if eq .Mode "edit"}}
             <div class="flex items-center">
-                <input type="checkbox" name="completed" id="completed" class="mr-2" {{if .Task}}{{if .Task.Completed}}checked{{end}}{{end}}>
+                <input type="checkbox" name="completed" id="completed" class="mr-2" {{if and .Task .Task.Completed}}checked{{end}}>
                 <label for="completed" class="text-sm text-gray-700">完了</label>
             </div>
             {{end}}
