@@ -1,6 +1,9 @@
 # SQLite3 Database Files
 *.db
 
+# Go debug files
+__debug_bin*
+
 # =============================================================================
 
 # Created by https://www.toptal.com/developers/gitignore/api/go,visualstudiocode,windows
