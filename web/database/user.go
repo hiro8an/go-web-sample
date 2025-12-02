@@ -1,6 +1,8 @@
 package database
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -8,7 +10,7 @@ type User struct {
 	ID        int    `gorm:"primaryKey"`
 	Username  string `gorm:"uniqueIndex"`
 	Password  string
-	CreatedAt string `gorm:"type:datetime;default:CURRENT_TIMESTAMP"`
+	CreatedAt time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP"`
 }
 
 // TableName は User 構造体が対応するテーブル名を指定します
