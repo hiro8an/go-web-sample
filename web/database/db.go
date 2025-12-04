@@ -44,8 +44,8 @@ func InitDB() error {
 
 	// マイグレーションインスタンスを作成
 	m, err := migrate.NewWithDatabaseInstance(
-		"file:///migrations", // マイグレーションファイルのパス
-		"sqlite3",            // データベース名
+		"file://migrations", // マイグレーションファイルのパス (相対パス)
+		"sqlite3",           // データベース名
 		driver,
 	)
 	if err != nil {
