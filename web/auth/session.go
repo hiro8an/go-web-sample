@@ -9,14 +9,13 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
-	"golang.org/x/crypto/bcrypt"
 
 	"go-web-sample/web/database"
 )
 
 const (
-	sessionCookieName = "session_id"
-	sessionTTL        = 24 * time.Hour
+	SessionCookieName = "session_id"
+	SessionTTL        = 24 * time.Hour
 )
 
 var store *sessions.CookieStore
@@ -34,7 +33,7 @@ func init() {
 	store = sessions.NewCookieStore(key)
 	store.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   int(sessionTTL.Seconds()),
+		MaxAge:   int(SessionTTL.Seconds()),
 		HttpOnly: true,
 	}
 }
@@ -49,7 +48,7 @@ func randID() (string, error) {
 
 // CreateSession セッションを作成する
 func CreateSession(w http.ResponseWriter, r *http.Request, username string) (string, error) {
-	sess, err := store.Get(r, sessionCookieName)
+	sess, err := store.Get(r, SessionCookieName)
 	if err != nil {
 		return "", err
 	}
@@ -61,7 +60,7 @@ func CreateSession(w http.ResponseWriter, r *http.Request, username string) (str
 	sess.Values["username"] = username
 	sess.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   int(sessionTTL.Seconds()),
+		MaxAge:   int(SessionTTL.Seconds()),
 		HttpOnly: true,
 	}
 	if err := sess.Save(r, w); err != nil {
@@ -70,9 +69,9 @@ func CreateSession(w http.ResponseWriter, r *http.Request, username string) (str
 	return id, nil
 }
 
-// GetUsername セッションからユーザー名を取得する
-func GetUsername(r *http.Request) (string, error) {
-	sess, err := store.Get(r, sessionCookieName)
+// GetUsernameFromSession セッションからユーザー名を取得する
+func GetUsernameFromSession(r *http.Request) (string, error) {
+	sess, err := store.Get(r, SessionCookieName)
 	if err != nil {
 		return "", err
 	}
@@ -83,9 +82,9 @@ func GetUsername(r *http.Request) (string, error) {
 	return username, nil
 }
 
-// GetUser セッションからユーザー情報を取得する
-func GetUser(r *http.Request) (*database.User, error) {
-	username, err := GetUsername(r)
+// GetUserFromSession セッションからユーザー情報を取得する
+func GetUserFromSession(r *http.Request) (*database.User, error) {
+	username, err := GetUsernameFromSession(r)
 	if err != nil {
 		return nil, err
 	}
@@ -94,45 +93,10 @@ func GetUser(r *http.Request) (*database.User, error) {
 
 // DeleteSession セッションを削除する
 func DeleteSession(w http.ResponseWriter, r *http.Request) error {
-	sess, err := store.Get(r, sessionCookieName)
+	sess, err := store.Get(r, SessionCookieName)
 	if err != nil {
 		return err
 	}
 	sess.Options.MaxAge = -1
 	return sess.Save(r, w)
-}
-
-// hashPassword パスワードをハッシュ化する
-func hashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
-}
-
-// checkPassword パスワードを検証する
-func checkPassword(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-// RegisterUser ユーザを登録する
-func RegisterUser(username, password string) error {
-	hash, err := hashPassword(password)
-	if err != nil {
-		return err
-	}
-
-	_, err = database.CreateUser(username, hash)
-	return err
-}
-
-// AuthenticateUser ユーザ認証を行う
-func AuthenticateUser(username, password string) (bool, error) {
-	user, err := database.GetUserByUsername(username)
-	if err != nil {
-		return false, err
-	}
-	if user == nil {
-		return false, nil
-	}
-	return checkPassword(password, user.Password), nil
 }

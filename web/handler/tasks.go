@@ -11,57 +11,27 @@ import (
 
 // Index - タスク一覧表示
 func IndexTasks(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.GetUser(r)
-	if err != nil {
-		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
-		return
-	}
-	if user == nil {
-		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
-		return
-	}
-
-	tasks, err := database.GetTasksByUser(user.ID)
+	tasks, err := database.GetTasksByUser(auth.UserID(r))
 	if err != nil {
 		http.Error(w, "タスク取得エラー", http.StatusInternalServerError)
 		return
 	}
-
 	tasksTmpl.Execute(w, map[string]interface{}{
-		"Username": user.Username,
+		"Username": auth.Username(r),
 		"Tasks":    tasks,
 	})
 }
 
 // New - 新規作成フォーム表示
 func NewTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.GetUser(r)
-	if err != nil {
-		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
-		return
-	}
-	if user == nil {
-		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
-		return
-	}
 	taskFormTmpl.Execute(w, map[string]interface{}{
-		"Username": user.Username,
+		"Username": auth.Username(r),
 		"Mode":     "create",
 	})
 }
 
 // Create - 新規作成処理
 func CreateTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.GetUser(r)
-	if err != nil {
-		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
-		return
-	}
-	if user == nil {
-		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
-		return
-	}
-
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "フォーム解析エラー", http.StatusBadRequest)
 		return
@@ -73,7 +43,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.CreateTask(user.ID, title, description)
+	_, err := database.CreateTask(auth.UserID(r), title, description)
 	if err != nil {
 		http.Error(w, "タスク作成エラー", http.StatusInternalServerError)
 		return
@@ -83,16 +53,6 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 // Show - 詳細表示
 func ShowTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.GetUser(r)
-	if err != nil {
-		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
-		return
-	}
-	if user == nil {
-		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
-		return
-	}
-
 	idStr := r.PathValue("id")
 	id, _ := strconv.Atoi(idStr)
 	if id == 0 {
@@ -101,29 +61,19 @@ func ShowTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task, err := database.GetTaskByID(id)
-	if err != nil || task == nil || task.UserID != user.ID {
+	if err != nil || task == nil || task.UserID != auth.UserID(r) {
 		http.Error(w, "タスクが見つかりません", http.StatusNotFound)
 		return
 	}
 
 	taskShowTmpl.Execute(w, map[string]interface{}{
-		"Username": user.Username,
+		"Username": auth.Username(r),
 		"Task":     task,
 	})
 }
 
 // Edit - 編集フォーム表示
 func EditTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.GetUser(r)
-	if err != nil {
-		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
-		return
-	}
-	if user == nil {
-		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
-		return
-	}
-
 	idStr := r.PathValue("id")
 	id, _ := strconv.Atoi(idStr)
 	if id == 0 {
@@ -132,13 +82,13 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task, err := database.GetTaskByID(id)
-	if err != nil || task == nil || task.UserID != user.ID {
+	if err != nil || task == nil || task.UserID != auth.UserID(r) {
 		http.Error(w, "タスクが見つかりません", http.StatusNotFound)
 		return
 	}
 
 	taskFormTmpl.Execute(w, map[string]interface{}{
-		"Username": user.Username,
+		"Username": auth.Username(r),
 		"Mode":     "edit",
 		"Task":     task,
 	})
@@ -146,16 +96,6 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 
 // Update - 更新処理
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.GetUser(r)
-	if err != nil {
-		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
-		return
-	}
-	if user == nil {
-		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
-		return
-	}
-
 	idStr := r.PathValue("id")
 	id, _ := strconv.Atoi(idStr)
 	if id == 0 {
@@ -164,7 +104,7 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task, err := database.GetTaskByID(id)
-	if err != nil || task == nil || task.UserID != user.ID {
+	if err != nil || task == nil || task.UserID != auth.UserID(r) {
 		http.Error(w, "タスクが見つかりません", http.StatusNotFound)
 		return
 	}
@@ -186,16 +126,6 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 // Destroy - 削除処理
 func DestroyTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.GetUser(r)
-	if err != nil {
-		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
-		return
-	}
-	if user == nil {
-		http.Error(w, "ユーザが見つかりません", http.StatusUnauthorized)
-		return
-	}
-
 	idStr := r.PathValue("id")
 	id, _ := strconv.Atoi(idStr)
 	if id == 0 {
@@ -205,7 +135,7 @@ func DestroyTask(w http.ResponseWriter, r *http.Request) {
 
 	// 所有者チェック
 	task, err := database.GetTaskByID(id)
-	if err != nil || task == nil || task.UserID != user.ID {
+	if err != nil || task == nil || task.UserID != auth.UserID(r) {
 		http.Error(w, "タスクが見つかりません", http.StatusNotFound)
 		return
 	}
