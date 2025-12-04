@@ -71,23 +71,23 @@ func CreateSession(w http.ResponseWriter, r *http.Request, username string) (str
 }
 
 // GetUsername セッションからユーザー名を取得する
-func GetUsername(r *http.Request) (string, bool) {
+func GetUsername(r *http.Request) (string, error) {
 	sess, err := store.Get(r, sessionCookieName)
 	if err != nil {
-		return "", false
+		return "", err
 	}
 	username, ok := sess.Values["username"].(string)
 	if !ok || username == "" {
-		return "", false
+		return "", fmt.Errorf("username not found in session")
 	}
-	return username, true
+	return username, nil
 }
 
 // GetUser セッションからユーザー情報を取得する
 func GetUser(r *http.Request) (*database.User, error) {
-	username, ok := GetUsername(r)
-	if !ok {
-		return nil, nil
+	username, err := GetUsername(r)
+	if err != nil {
+		return nil, err
 	}
 	return database.GetUserByUsername(username)
 }

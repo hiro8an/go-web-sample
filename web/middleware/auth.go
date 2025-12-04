@@ -10,8 +10,8 @@ import (
 // 使用例: mux.HandleFunc("/profile", middleware.RequireLogin(ProfileHandler))
 func RequireLogin(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, ok := auth.GetUsername(r)
-		if !ok {
+		_, err := auth.GetUsername(r)
+		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
