@@ -1,8 +1,12 @@
 package database
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -26,32 +30,34 @@ func InitDB() error {
 		return err
 	}
 
-	// ユーザテーブル作成
-	createTableSQL := `CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		username TEXT UNIQUE NOT NULL,
-		password TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	);`
-
-	err = db.Exec(createTableSQL).Error
+	// GORM の *sql.DB を取得
+	sqlDB, err := db.DB()
 	if err != nil {
 		return err
 	}
 
-	// タスクテーブル作成（ユーザごとのタスク管理）
-	createTasksSQL := `CREATE TABLE IF NOT EXISTS tasks (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER NOT NULL,
-		title TEXT NOT NULL,
-		description TEXT,
-		completed INTEGER DEFAULT 0,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-	);`
+	// マイグレーションドライバーを作成
+	driver, err := sqlite3.WithInstance(sqlDB, &sqlite3.Config{})
+	if err != nil {
+		return fmt.Errorf("マイグレーションドライバーの作成に失敗しました: %w", err)
+	}
 
-	err = db.Exec(createTasksSQL).Error
-	return err
+	// マイグレーションインスタンスを作成
+	m, err := migrate.NewWithDatabaseInstance(
+		"file:///migrations", // マイグレーションファイルのパス
+		"sqlite3",            // データベース名
+		driver,
+	)
+	if err != nil {
+		return fmt.Errorf("マイグレーションインスタンスの作成に失敗しました: %w", err)
+	}
+
+	// マイグレーションを実行
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("マイグレーションの実行に失敗しました: %w", err)
+	}
+
+	return nil
 }
 
 func CloseDB() error {
