@@ -11,7 +11,7 @@ import (
 
 // Index - タスク一覧表示
 func IndexTasks(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.AuthManager.GetUser(r)
+	user, err := auth.GetUser(r)
 	if err != nil {
 		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
 		return
@@ -35,7 +35,7 @@ func IndexTasks(w http.ResponseWriter, r *http.Request) {
 
 // New - 新規作成フォーム表示
 func NewTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.AuthManager.GetUser(r)
+	user, err := auth.GetUser(r)
 	if err != nil {
 		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
 		return
@@ -52,7 +52,7 @@ func NewTask(w http.ResponseWriter, r *http.Request) {
 
 // Create - 新規作成処理
 func CreateTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.AuthManager.GetUser(r)
+	user, err := auth.GetUser(r)
 	if err != nil {
 		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
 		return
@@ -83,7 +83,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 // Show - 詳細表示
 func ShowTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.AuthManager.GetUser(r)
+	user, err := auth.GetUser(r)
 	if err != nil {
 		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
 		return
@@ -114,7 +114,7 @@ func ShowTask(w http.ResponseWriter, r *http.Request) {
 
 // Edit - 編集フォーム表示
 func EditTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.AuthManager.GetUser(r)
+	user, err := auth.GetUser(r)
 	if err != nil {
 		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
 		return
@@ -146,7 +146,7 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 
 // Update - 更新処理
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.AuthManager.GetUser(r)
+	user, err := auth.GetUser(r)
 	if err != nil {
 		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
 		return
@@ -186,7 +186,7 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 // Destroy - 削除処理
 func DestroyTask(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.AuthManager.GetUser(r)
+	user, err := auth.GetUser(r)
 	if err != nil {
 		http.Error(w, "ユーザー取得エラー", http.StatusInternalServerError)
 		return

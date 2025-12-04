@@ -14,25 +14,14 @@ import (
 	"go-web-sample/web/database"
 )
 
-var (
+const (
 	sessionCookieName = "session_id"
 	sessionTTL        = 24 * time.Hour
 )
 
-// AuthManager は handler や middleware からアクセス可能なグローバルな認証用マネージャです。
-var AuthManager *Manager
+var store *sessions.CookieStore
 
 func init() {
-	AuthManager = NewManager()
-}
-
-type Manager struct {
-	store             *sessions.CookieStore
-	sessionCookieName string
-	sessionTTL        time.Duration
-}
-
-func NewManager() *Manager {
 	envKey := os.Getenv("SESSION_KEY")
 	var key []byte
 	if envKey != "" {
@@ -42,13 +31,12 @@ func NewManager() *Manager {
 		key = []byte("a-very-secret-key-that-is-32-bytes!")
 	}
 
-	store := sessions.NewCookieStore(key)
+	store = sessions.NewCookieStore(key)
 	store.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   int(sessionTTL.Seconds()),
 		HttpOnly: true,
 	}
-	return &Manager{store: store, sessionCookieName: sessionCookieName, sessionTTL: sessionTTL}
 }
 
 func randID() (string, error) {
@@ -59,8 +47,9 @@ func randID() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func (m *Manager) CreateSession(w http.ResponseWriter, r *http.Request, username string) (string, error) {
-	sess, err := m.store.Get(r, m.sessionCookieName)
+// CreateSession セッションを作成する
+func CreateSession(w http.ResponseWriter, r *http.Request, username string) (string, error) {
+	sess, err := store.Get(r, sessionCookieName)
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +61,7 @@ func (m *Manager) CreateSession(w http.ResponseWriter, r *http.Request, username
 	sess.Values["username"] = username
 	sess.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   int(m.sessionTTL.Seconds()),
+		MaxAge:   int(sessionTTL.Seconds()),
 		HttpOnly: true,
 	}
 	if err := sess.Save(r, w); err != nil {
@@ -81,8 +70,9 @@ func (m *Manager) CreateSession(w http.ResponseWriter, r *http.Request, username
 	return id, nil
 }
 
-func (m *Manager) GetUsername(r *http.Request) (string, bool) {
-	sess, err := m.store.Get(r, m.sessionCookieName)
+// GetUsername セッションからユーザー名を取得する
+func GetUsername(r *http.Request) (string, bool) {
+	sess, err := store.Get(r, sessionCookieName)
 	if err != nil {
 		return "", false
 	}
@@ -94,16 +84,17 @@ func (m *Manager) GetUsername(r *http.Request) (string, bool) {
 }
 
 // GetUser セッションからユーザー情報を取得する
-func (m *Manager) GetUser(r *http.Request) (*database.User, error) {
-	username, ok := m.GetUsername(r)
+func GetUser(r *http.Request) (*database.User, error) {
+	username, ok := GetUsername(r)
 	if !ok {
 		return nil, nil
 	}
 	return database.GetUserByUsername(username)
 }
 
-func (m *Manager) DeleteSession(w http.ResponseWriter, r *http.Request) error {
-	sess, err := m.store.Get(r, m.sessionCookieName)
+// DeleteSession セッションを削除する
+func DeleteSession(w http.ResponseWriter, r *http.Request) error {
+	sess, err := store.Get(r, sessionCookieName)
 	if err != nil {
 		return err
 	}

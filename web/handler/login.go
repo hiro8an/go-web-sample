@@ -40,7 +40,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// セッション作成 (cookie は内部で保存される)
-	_, err = auth.AuthManager.CreateSession(w, r, username)
+	_, err = auth.CreateSession(w, r, username)
 	if err != nil {
 		http.Error(w, "セッション生成エラー", http.StatusInternalServerError)
 		return
@@ -52,6 +52,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 // ログアウト
 func Logout(w http.ResponseWriter, r *http.Request) {
-	_ = auth.AuthManager.DeleteSession(w, r)
+	_ = auth.DeleteSession(w, r)
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
